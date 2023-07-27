@@ -1,0 +1,46 @@
+import os
+import time
+
+from celery import Celery
+from redis import Redis
+
+from PIL import Image
+
+
+app = Flask(__name__)
+app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379'
+app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379'
+
+redis = Redis(host='localhost', port=6379, db=0)
+
+
+@app.route('/resize/<image_id>')
+def resize_image(image_id):
+    """Resizes an image and returns the resized image URL."""
+
+    task = celery.delay('resize_image', image_id)
+
+    while not task.ready():
+        time.sleep(0.1)
+
+    return task.result
+
+
+@celery.task(serializer='pickle')
+def resize_image(image_id):
+    """Resizes an image and stores the resized image in Redis."""
+
+    image_file = os.path.join('images', image_id + '.jpg')
+
+    with Image.open(image_file) as image:
+        resized_image = image.resize((200, 200))
+
+    resized_image.save(image_file)
+
+    redis.set(image_id, image_file)
+
+    return image_file
+
+
+if __name__ == '__main__':
+    app.run()

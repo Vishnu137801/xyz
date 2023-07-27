@@ -1,0 +1,11 @@
+Flask==0.10.1
+mkdir image-resizer
+cd image-resizer
+cp <path-to-code> .
+touch requirements.txt
+echo "Flask==2.0.2" >> requirements.txt
+echo "celery==5.2.3" >> requirements.txt
+echo "redis==3.5.3" >> requirements.txt
+pip install -r requirements.txt
+gunicorn -w 4 -b 0.0.0.0:5000 app:app
+celery worker -A app --loglevel=info

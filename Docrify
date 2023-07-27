@@ -1,0 +1,10 @@
+docker build -t celery-worker
+version: '3.7'
+services:
+  celery-worker:
+    image: celery-worker
+    command: celery worker -A app.celery --loglevel=info
+  app:
+    image: app
+    ports:
+      - 5000:5000
